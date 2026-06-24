@@ -6,7 +6,8 @@ const THEME_KEY = 'app_theme';
 export function useTheme(): { theme: Theme; toggle: () => void } {
   const [theme, setTheme] = useState<Theme>(() => {
     try {
-      return (localStorage.getItem(THEME_KEY) as Theme) || 'dark';
+      const stored = localStorage.getItem(THEME_KEY);
+      return stored === 'light' ? 'light' : 'dark';
     } catch {
       return 'dark';
     }
@@ -14,7 +15,11 @@ export function useTheme(): { theme: Theme; toggle: () => void } {
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
-    localStorage.setItem(THEME_KEY, theme);
+    try {
+      localStorage.setItem(THEME_KEY, theme);
+    } catch {
+      // ignore quota/storage errors
+    }
   }, [theme]);
 
   const toggle = () => setTheme(t => (t === 'dark' ? 'light' : 'dark'));

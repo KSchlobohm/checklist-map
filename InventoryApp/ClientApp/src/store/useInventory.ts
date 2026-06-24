@@ -16,7 +16,11 @@ function load<T>(key: string, fallback: T): T {
 }
 
 function persist<T>(key: string, value: T): void {
-  localStorage.setItem(key, JSON.stringify(value));
+  try {
+    localStorage.setItem(key, JSON.stringify(value));
+  } catch {
+    // ignore quota/storage errors
+  }
 }
 
 const SEED: InventoryItem[] = [

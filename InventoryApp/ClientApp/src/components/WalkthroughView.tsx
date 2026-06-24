@@ -2,7 +2,10 @@ import React, { useState, useMemo } from 'react';
 import { InventoryItem, Vote, HistoryEntry, WalkthroughResult } from '../types';
 
 function buildQueue(items: InventoryItem[], walkthroughCount: number): InventoryItem[] {
-  const due = items.filter(item => walkthroughCount % item.checkEvery === 0);
+  const due = items.filter(item => {
+    const every = item.checkEvery > 0 ? item.checkEvery : 1;
+    return walkthroughCount % every === 0;
+  });
   return [...due].sort((a, b) => {
     const loc = a.location.localeCompare(b.location);
     if (loc !== 0) return loc;
