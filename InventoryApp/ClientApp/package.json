@@ -30,6 +30,7 @@
     "workbox-streams": "^6.5.4"
   },
   "devDependencies": {
+    "@testing-library/react": "^16.3.2",
     "@types/node": "^26.0.0",
     "@types/react": "^18.0.0",
     "@types/react-dom": "^18.0.0",
