@@ -2,12 +2,23 @@ import React, { useState } from 'react';
 import { InventoryItem, AppData } from '../types';
 
 function encode(data: AppData): string {
-  return btoa(unescape(encodeURIComponent(JSON.stringify(data))));
+  const json = JSON.stringify(data);
+  const bytes = new TextEncoder().encode(json);
+  let binary = '';
+  bytes.forEach(b => {
+    binary += String.fromCharCode(b);
+  });
+  return btoa(binary);
 }
 
 function decode(str: string): AppData | null {
   try {
-    return JSON.parse(decodeURIComponent(escape(atob(str.trim())))) as AppData;
+    const binary = atob(str.trim());
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) {
+      bytes[i] = binary.charCodeAt(i);
+    }
+    return JSON.parse(new TextDecoder().decode(bytes)) as AppData;
   } catch {
     return null;
   }
