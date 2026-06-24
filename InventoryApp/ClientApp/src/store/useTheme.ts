@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 
-type Theme = 'dark' | 'light';
+export type Theme = 'dark' | 'light';
 const THEME_KEY = 'app_theme';
 
-export function useTheme() {
+export function useTheme(): { theme: Theme; toggle: () => void } {
   const [theme, setTheme] = useState<Theme>(() => {
     try {
       return (localStorage.getItem(THEME_KEY) as Theme) || 'dark';

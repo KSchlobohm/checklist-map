@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import './App.css';
 import { useInventory } from './store/useInventory';
 import { useTheme } from './store/useTheme';
+import type { Theme } from './store/useTheme';
 import { ViewName, WalkthroughResult } from './types';
 import NavBar from './components/NavBar';
 import HomeView from './components/HomeView';
@@ -13,7 +14,7 @@ import ImportExportView from './components/ImportExportView';
 function App() {
   const [view, setView] = useState<ViewName>('home');
   const inv = useInventory();
-  const { theme, toggle } = useTheme();
+  const { theme, toggle }: { theme: Theme; toggle: () => void } = useTheme();
 
   const handleWalkthroughDone = (result: WalkthroughResult) => {
     inv.saveShoppingList(result.finalShoppingList);

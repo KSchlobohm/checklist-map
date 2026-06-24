@@ -1,11 +1,12 @@
 import React from 'react';
 import { InventoryItem } from '../types';
+import type { Theme } from '../store/useTheme';
 
 interface Props {
   items: InventoryItem[];
   shoppingList: string[];
   lastWalkthroughAt: number;
-  theme: string;
+  theme: Theme;
   onToggleTheme: () => void;
   onStartWalkthrough: () => void;
   onViewList: () => void;
