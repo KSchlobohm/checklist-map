@@ -53,11 +53,12 @@ const SEED: InventoryItem[] = [
 
 export function useInventory() {
   const [items, setItems] = useState<InventoryItem[]>(() => {
-    const stored = load<InventoryItem[]>(ITEMS_KEY, []);
-    if (stored.length === 0) {
+    const raw = localStorage.getItem(ITEMS_KEY);
+    if (raw === null) {
       persist(ITEMS_KEY, SEED);
       return SEED;
     }
+    const stored = load<InventoryItem[]>(ITEMS_KEY, []);
     return stored;
   });
 

@@ -24,6 +24,18 @@ function decode(str: string): AppData | null {
   }
 }
 
+function sanitizeItems(raw: unknown[]): InventoryItem[] {
+  return raw.filter(
+    (i): i is InventoryItem =>
+      i !== null &&
+      typeof i === 'object' &&
+      typeof (i as InventoryItem).id === 'string' &&
+      typeof (i as InventoryItem).name === 'string' &&
+      typeof (i as InventoryItem).location === 'string'
+  );
+}
+
+
 interface Props {
   items: InventoryItem[];
   shoppingList: string[];
@@ -48,19 +60,28 @@ const ImportExportView: React.FC<Props> = ({ items, shoppingList, onImport }) =>
   }
 
   function handleImport(merge: boolean) {
-    const data = decode(importStr);
+    let data: AppData | null;
+    try {
+      data = decode(importStr);
+    } catch {
+      data = null;
+    }
     if (!data || !Array.isArray(data.items)) {
       setMessage('❌ Invalid data. Check your paste and try again.');
       return;
     }
+    const safeItems = sanitizeItems(data.items);
+    const safeList  = Array.isArray(data.shoppingList) ? data.shoppingList.filter((x): x is string => typeof x === 'string') : [];
+    const skipped   = data.items.length - safeItems.length;
+    const skipNote  = skipped > 0 ? ` (${skipped} malformed item${skipped !== 1 ? 's' : ''} skipped)` : '';
     if (merge) {
       const existing = new Set(items.map(i => i.id));
-      const added    = data.items.filter(i => !existing.has(i.id));
+      const added    = safeItems.filter(i => !existing.has(i.id));
       onImport({ version: 1, items: [...items, ...added], shoppingList });
-      setMessage(`✅ Merged ${added.length} new item${added.length !== 1 ? 's' : ''}.`);
+      setMessage(`✅ Merged ${added.length} new item${added.length !== 1 ? 's' : ''}${skipNote}.`);
     } else {
-      onImport(data);
-      setMessage(`✅ Replaced all data (${data.items.length} items).`);
+      onImport({ version: 1, items: safeItems, shoppingList: safeList });
+      setMessage(`✅ Replaced all data (${safeItems.length} items)${skipNote}.`);
     }
     setImportStr('');
   }
