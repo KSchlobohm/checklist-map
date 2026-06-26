@@ -70,6 +70,19 @@ const ImportExportView: React.FC<Props> = ({ items, shoppingList, onImport }) =>
           setShareUrlError('Set ClientConfig:DataPageUrl in appsettings to enable QR sharing.');
           return;
         }
+        let parsed: URL;
+        try {
+          parsed = new URL(configuredUrl);
+        } catch {
+          setShareUrl('');
+          setShareUrlError('ClientConfig:DataPageUrl is not a valid URL.');
+          return;
+        }
+        if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+          setShareUrl('');
+          setShareUrlError('ClientConfig:DataPageUrl must use http or https.');
+          return;
+        }
         setShareUrl(configuredUrl);
         setShareUrlError('');
       } catch {
