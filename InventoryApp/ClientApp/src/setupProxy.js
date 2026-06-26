@@ -1,3 +1,12 @@
-module.exports = function setupProxy() {
-  // This app is fully client-side and does not proxy API requests during development.
+const { createProxyMiddleware } = require('http-proxy-middleware');
+
+module.exports = function setupProxy(app) {
+  app.use(
+    '/api',
+    createProxyMiddleware({
+      target: 'https://localhost:7021',
+      changeOrigin: true,
+      secure: false,
+    })
+  );
 };
