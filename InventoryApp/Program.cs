@@ -10,6 +10,13 @@ if (!app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseRouting();
+app.MapGet("/api/client-config", (IConfiguration configuration) =>
+{
+    return Results.Ok(new
+    {
+        dataPageUrl = configuration["ClientConfig:DataPageUrl"]
+    });
+});
 app.MapFallbackToFile("index.html");
 
 app.Run();

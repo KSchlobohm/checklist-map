@@ -8,6 +8,7 @@
     "jquery": "^3.6.4",
     "merge": "^2.1.1",
     "oidc-client": "^1.11.5",
+    "qrcode": "^1.5.4",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-router-bootstrap": "^0.26.2",
@@ -32,6 +33,7 @@
   "devDependencies": {
     "@testing-library/react": "^16.3.2",
     "@types/node": "^26.0.0",
+    "@types/qrcode": "^1.5.6",
     "@types/react": "^18.0.0",
     "@types/react-dom": "^18.0.0",
     "ajv": "^8.12.0",

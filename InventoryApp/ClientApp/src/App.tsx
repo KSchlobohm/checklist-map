@@ -11,8 +11,16 @@ import ShoppingListView from './components/ShoppingListView';
 import ManageItemsView from './components/ManageItemsView';
 import ImportExportView from './components/ImportExportView';
 
+function getInitialView(): ViewName {
+  const view = new URLSearchParams(window.location.search).get('view');
+  if (view === 'list' || view === 'manage' || view === 'importExport') {
+    return view;
+  }
+  return 'home';
+}
+
 function App() {
-  const [view, setView] = useState<ViewName>('home');
+  const [view, setView] = useState<ViewName>(getInitialView);
   const inv = useInventory();
   const { theme, toggle }: { theme: Theme; toggle: () => void } = useTheme();
 
