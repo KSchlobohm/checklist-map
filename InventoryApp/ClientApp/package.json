@@ -2,6 +2,7 @@
   "name": "inventoryapp",
   "version": "0.1.0",
   "private": true,
+  "homepage": "https://kschlobohm.github.io/checklist-map",
   "dependencies": {
     "bootstrap": "^5.2.3",
     "http-proxy-middleware": "^2.0.6",
@@ -57,6 +58,7 @@
     "start": "rimraf ./build && cross-env HTTPS=false PORT=3000 react-scripts start",
     "build": "react-scripts build",
     "test": "cross-env CI=true react-scripts test --env=jsdom",
+    "check": "npm run lint && npm test -- --runInBand && npm run build",
     "eject": "react-scripts eject",
     "lint": "eslint ./src/"
   },
