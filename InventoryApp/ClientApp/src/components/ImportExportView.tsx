@@ -48,64 +48,19 @@ const ImportExportView: React.FC<Props> = ({ items, shoppingList, onImport }) =>
   const [importStr, setImportStr] = useState('');
   const [message,   setMessage]   = useState('');
   const [copied,    setCopied]    = useState(false);
-  const [shareUrl, setShareUrl] = useState('');
+  const [shareUrl] = useState(() => {
+    const url = new URL(window.location.href);
+    url.hash = '';
+    url.search = '';
+    url.searchParams.set('view', 'importExport');
+    return url.toString();
+  });
   const [shareUrlError, setShareUrlError] = useState('');
   const [qrCodeDataUrl, setQrCodeDataUrl] = useState('');
 
   useEffect(() => {
     let mounted = true;
-    const loadShareUrl = async () => {
-      try {
-        const response = await fetch('/api/client-config');
-        if (!response.ok) {
-          throw new Error('Failed to load client config');
-        }
-        const payload = await response.json() as { dataPageUrl?: string };
-        const configuredUrl = payload.dataPageUrl?.trim() ?? '';
-        if (!mounted) {
-          return;
-        }
-        if (!configuredUrl) {
-          setShareUrl('');
-          setShareUrlError('Set ClientConfig:DataPageUrl in appsettings to enable QR sharing.');
-          return;
-        }
-        let parsed: URL;
-        try {
-          parsed = new URL(configuredUrl);
-        } catch {
-          setShareUrl('');
-          setShareUrlError('ClientConfig:DataPageUrl is not a valid URL.');
-          return;
-        }
-        if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
-          setShareUrl('');
-          setShareUrlError('ClientConfig:DataPageUrl must use http or https.');
-          return;
-        }
-        setShareUrl(configuredUrl);
-        setShareUrlError('');
-      } catch {
-        if (!mounted) {
-          return;
-        }
-        setShareUrl('');
-        setShareUrlError('Unable to load QR share URL from server configuration.');
-      }
-    };
-    void loadShareUrl();
-    return () => {
-      mounted = false;
-    };
-  }, []);
-
-  useEffect(() => {
-    let mounted = true;
     const generateQr = async () => {
-      if (!shareUrl) {
-        setQrCodeDataUrl('');
-        return;
-      }
       try {
         const dataUrl = await QRCode.toDataURL(shareUrl, { width: 220, margin: 1 });
         if (mounted) {
@@ -169,14 +124,14 @@ const ImportExportView: React.FC<Props> = ({ items, shoppingList, onImport }) =>
         <div className="ie-section">
           <h3 className="ie-title">Open on Phone</h3>
           <p className="text-muted">Scan this QR code to open this Data page on your phone.</p>
-          {qrCodeDataUrl && (
-            <div className="qr-share">
+          <div className="qr-share">
+            {qrCodeDataUrl && (
               <img className="qr-image" src={qrCodeDataUrl} alt={`QR code for ${shareUrl}`} />
-              <a className="qr-link" href={shareUrl} target="_blank" rel="noreferrer">
-                {shareUrl}
-              </a>
-            </div>
-          )}
+            )}
+            <a className="qr-link" href={shareUrl} target="_blank" rel="noreferrer">
+              {shareUrl}
+            </a>
+          </div>
           {shareUrlError && <p className="import-message">{shareUrlError}</p>}
         </div>
 
