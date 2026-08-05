@@ -55,6 +55,8 @@ test('adds, edits, deletes, and persists inventory items', async ({ page }) => {
 
   await page.getByRole('button', { name: /Add Item/ }).click();
   await page.getByPlaceholder('Item name *').fill('Paper Towels');
+  await page.getByRole('button', { name: 'Toggle theme' }).click();
+  await expect(page.getByPlaceholder('Item name *')).toHaveValue('Paper Towels');
   await page.getByPlaceholder('Location (e.g. Pantry)').fill('Basement');
   await page.getByPlaceholder('Category (e.g. Snacks)').fill('Household');
   await page.getByRole('button', { name: '5', exact: true }).click();
@@ -105,6 +107,38 @@ test('completes a walkthrough and persists its shopping-list result', async ({ p
   await page.reload();
   await navButton(page, 'List').click();
   await expect(page.getByText('Fixture Item')).toBeVisible();
+});
+
+test('undo from completion returns to the final voted item', async ({ page }) => {
+  const secondItem = {
+    ...fixtureItem,
+    id: 'second-item',
+    name: 'Second Item',
+    location: 'Pantry',
+  };
+  await seedInventory(page, [fixtureItem, secondItem]);
+  await page.goto('./');
+
+  await page.getByRole('button', { name: 'Start Walkthrough' }).click();
+  await expect(page.getByText('Fixture Item')).toBeVisible();
+  await page.getByRole('button', { name: /Need It/ }).click();
+  await expect(page.getByText('Second Item')).toBeVisible();
+  await page.getByRole('button', { name: /Need It/ }).click();
+  await expect(page.getByText('All Done!')).toBeVisible();
+
+  await page.getByRole('button', { name: /Back/ }).click();
+  await expect(page.getByText('Second Item')).toBeVisible();
+  await page.getByRole('button', { name: /Have It/ }).click();
+  await page.getByRole('button', { name: 'Save & Done' }).click();
+
+  const persisted = await page.evaluate(() =>
+    JSON.parse(localStorage.getItem('checklist-map:data:v1') ?? '{}')
+  );
+  expect(persisted.shoppingList).toEqual(['fixture-item']);
+  expect(persisted.items).toEqual([
+    expect.objectContaining({ id: 'fixture-item', needCount: 1 }),
+    expect.objectContaining({ id: 'second-item', needCount: 0 }),
+  ]);
 });
 
 test('rejects malformed backups and restores exported data', async ({ page }) => {

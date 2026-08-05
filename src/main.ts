@@ -65,7 +65,7 @@ const updateServiceWorker = registerSW({
   immediate: true,
   onNeedRefresh() {
     updateAvailable = true
-    render()
+    showUpdatePrompt()
   },
   onRegisterError(error) {
     console.error('Service worker registration failed.', error)
@@ -839,9 +839,12 @@ function renderUpdatePrompt(): HTMLElement {
     actionButton(
       'Later',
       'btn-secondary',
-      () => {
+      (event) => {
         updateAvailable = false
-        render()
+        const target = event.currentTarget
+        if (target instanceof HTMLElement) {
+          target.closest('.update-prompt')?.remove()
+        }
       },
     ),
   )
@@ -853,9 +856,12 @@ function renderPersistenceWarning(): HTMLElement {
   warning.setAttribute('role', 'alert')
   warning.append(
     element('span', undefined, persistenceMessage ?? ''),
-    actionButton('Dismiss', 'btn-secondary', () => {
+    actionButton('Dismiss', 'btn-secondary', (event) => {
       persistenceMessage = null
-      render()
+      const target = event.currentTarget
+      if (target instanceof HTMLElement) {
+        target.closest('.persistence-warning')?.remove()
+      }
     }),
   )
   return warning
@@ -901,9 +907,12 @@ function castVote(vote: Vote): void {
 function undoWalkthrough(): void {
   const state = requireWalkthrough()
   if (state.history.length === 0) return
+  const wasCompleted = state.completed
   state.completed = false
   state.history = state.history.slice(0, -1)
-  state.index = Math.max(0, state.index - 1)
+  if (!wasCompleted) {
+    state.index = Math.max(0, state.index - 1)
+  }
   render()
 }
 
@@ -932,12 +941,17 @@ function importData(value: string, merge: boolean): void {
   if (!updateData(replaceBackup(current, prepared.data), false)) {
     return
   }
+  const skipped = prepared.skippedItemCount
+  const skipNote =
+    skipped > 0
+      ? ` (${skipped} malformed item${skipped === 1 ? '' : 's'} skipped)`
+      : ''
   if (merge) {
     const count = prepared.importedItemCount
-    importMessage = `✅ Merged ${count} new item${count === 1 ? '' : 's'}.`
+    importMessage = `✅ Merged ${count} new item${count === 1 ? '' : 's'}${skipNote}.`
   } else {
     const count = prepared.importedItemCount
-    importMessage = `✅ Replaced all data (${count} item${count === 1 ? '' : 's'}).`
+    importMessage = `✅ Replaced all data (${count} item${count === 1 ? '' : 's'})${skipNote}.`
   }
   render()
 }
@@ -948,7 +962,7 @@ function updateData(nextData: AppData, shouldRender = true): boolean {
   } catch (error) {
     persistenceMessage =
       error instanceof Error ? error.message : 'Changes could not be saved.'
-    render()
+    showPersistenceWarning()
     return false
   }
   data = nextData
@@ -967,12 +981,16 @@ function toggleTheme(): void {
       error instanceof Error
         ? `Theme preference could not be saved: ${error.message}`
         : 'Theme preference could not be saved.'
-    render()
+    showPersistenceWarning()
     return
   }
   theme = nextTheme
   document.documentElement.dataset.theme = theme
-  render()
+  for (const button of document.querySelectorAll<HTMLButtonElement>(
+    '.theme-toggle',
+  )) {
+    button.textContent = theme === 'dark' ? '☀️' : '🌙'
+  }
 }
 
 function synchronizeStoredData(event: StorageEvent): void {
@@ -1012,6 +1030,21 @@ function loadTheme(): { theme: Theme; warning: string | null } {
           ? `Theme preference is unavailable: ${error.message}`
           : 'Theme preference is unavailable.',
     }
+  }
+}
+
+function showUpdatePrompt(): void {
+  const app = root.querySelector('.app')
+  if (app && !app.querySelector('.update-prompt')) {
+    app.append(renderUpdatePrompt())
+  }
+}
+
+function showPersistenceWarning(): void {
+  const app = root.querySelector('.app')
+  app?.querySelector('.persistence-warning')?.remove()
+  if (app && persistenceMessage) {
+    app.append(renderPersistenceWarning())
   }
 }
 

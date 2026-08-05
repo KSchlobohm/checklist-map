@@ -52,6 +52,7 @@ test('replacement imports preserve the complete validated backup', () => {
         shoppingList: ['valid'],
       },
       importedItemCount: 1,
+      skippedItemCount: 0,
     },
   )
 })
@@ -72,6 +73,30 @@ test('merge imports add only new identifiers and retain the current list', () =>
         shoppingList: ['existing'],
       },
       importedItemCount: 1,
+      skippedItemCount: 0,
+    },
+  )
+})
+
+test('a malformed item is skipped without discarding valid backup data', () => {
+  const encoded = Buffer.from(
+    JSON.stringify({
+      version: 1,
+      items: [item('valid'), { id: 'damaged', name: 'Missing fields' }],
+      shoppingList: ['valid', 'damaged'],
+    }),
+  ).toString('base64')
+
+  assert.deepEqual(
+    prepareImport(encoded, [item('existing')], [], false),
+    {
+      data: {
+        version: 1,
+        items: [item('valid')],
+        shoppingList: ['valid'],
+      },
+      importedItemCount: 1,
+      skippedItemCount: 1,
     },
   )
 })
