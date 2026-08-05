@@ -11,3 +11,5 @@ Run these checks on the deployed GitHub Pages site in current desktop Chrome or 
 7. Paste malformed backup text and confirm existing data remains unchanged.
 8. Toggle the theme and confirm it remains selected after refresh.
 9. Install the PWA, open it offline after an initial online load, and confirm the cached app shell works.
+10. With the previous deployed version installed, deploy an update and confirm the update prompt appears and reloads into the new version only after approval.
+11. In a browser profile containing the previous `pantry_items` storage, load the new release and confirm items, shopping-list state, walkthrough count, and last-walked time migrate without changing the legacy keys.

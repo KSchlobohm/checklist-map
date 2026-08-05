@@ -21,9 +21,6 @@ permissions:
 jobs:
   validate:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: InventoryApp/ClientApp
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -33,7 +30,6 @@ jobs:
         with:
           node-version: 22.x
           cache: npm
-          cache-dependency-path: InventoryApp/ClientApp/package-lock.json
 
       - name: Install dependencies
         run: npm ci
@@ -51,9 +47,6 @@ jobs:
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
-    defaults:
-      run:
-        working-directory: InventoryApp/ClientApp
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -63,7 +56,6 @@ jobs:
         with:
           node-version: 22.x
           cache: npm
-          cache-dependency-path: InventoryApp/ClientApp/package-lock.json
 
       - name: Install dependencies
         run: npm ci
@@ -73,11 +65,13 @@ jobs:
 
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5
+        with:
+          enablement: true
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: InventoryApp/ClientApp/build
+          path: dist
 
       - name: Deploy to GitHub Pages
         id: deployment
