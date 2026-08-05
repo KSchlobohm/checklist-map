@@ -32,7 +32,9 @@
     "workbox-streams": "^6.5.4"
   },
   "devDependencies": {
+    "@playwright/test": "^1.63.0-alpha-2026-07-29",
     "@testing-library/react": "^16.3.2",
+    "@types/jest": "^30.0.0",
     "@types/node": "^26.0.0",
     "@types/qrcode": "^1.5.6",
     "@types/react": "^18.0.0",
@@ -58,9 +60,11 @@
     "start": "rimraf ./build && cross-env HTTPS=false PORT=3000 react-scripts start",
     "build": "react-scripts build",
     "test": "cross-env CI=true react-scripts test --env=jsdom",
-    "check": "npm run lint && npm test -- --runInBand && npm run build",
+    "test:unit": "npm test -- --runInBand",
+    "test:e2e": "playwright test",
+    "check": "npm run lint && npm run test:unit && npm run build && npm run test:e2e",
     "eject": "react-scripts eject",
-    "lint": "eslint ./src/"
+    "lint": "eslint ./src/ ./e2e/ playwright.config.ts"
   },
   "eslintConfig": {
     "extends": [

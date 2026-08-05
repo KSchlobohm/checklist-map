@@ -1,31 +1,10 @@
 import React, { useState, useMemo } from 'react';
 import { InventoryItem, Vote, HistoryEntry, WalkthroughResult } from '../types';
-
-function buildQueue(items: InventoryItem[], walkthroughCount: number): InventoryItem[] {
-  const due = items.filter(item => {
-    const every = item.checkEvery > 0 ? item.checkEvery : 1;
-    return walkthroughCount % every === 0;
-  });
-  return [...due].sort((a, b) => {
-    const loc = a.location.localeCompare(b.location);
-    if (loc !== 0) return loc;
-    if (b.priority !== a.priority) return b.priority - a.priority;
-    return b.needCount - a.needCount;
-  });
-}
-
-function applyHistory(initial: string[], history: HistoryEntry[]): string[] {
-  let list = [...initial];
-  for (const { item, vote } of history) {
-    if (vote === 'need') {
-      if (!list.includes(item.id)) list = [...list, item.id];
-    } else if (vote === 'have') {
-      list = list.filter(id => id !== item.id);
-    }
-    // skip: list unchanged
-  }
-  return list;
-}
+import {
+  applyWalkthroughHistory,
+  buildWalkthroughQueue,
+  buildWalkthroughResult,
+} from '../domain/walkthrough';
 
 interface Props {
   items: InventoryItem[];
@@ -37,31 +16,21 @@ interface Props {
 const WalkthroughView: React.FC<Props> = ({
   items, initialShoppingList, walkthroughCount, onDone,
 }) => {
-  const [queue] = useState<InventoryItem[]>(() => buildQueue(items, walkthroughCount));
+  const [queue] = useState<InventoryItem[]>(() =>
+    buildWalkthroughQueue(items, walkthroughCount)
+  );
   const [index, setIndex] = useState(0);
   const [history, setHistory] = useState<HistoryEntry[]>([]);
   const [completed, setCompleted] = useState(false);
 
   const currentList = useMemo(
-    () => applyHistory(initialShoppingList, history),
+    () => applyWalkthroughHistory(initialShoppingList, history),
     [initialShoppingList, history]
   );
 
   const current = queue[index];
   const total   = queue.length;
   const canBack = history.length > 0;
-
-  function buildResult(h: HistoryEntry[], list: string[]): WalkthroughResult {
-    const needCountMods: Record<string, number> = {};
-    const skipCountMods: Record<string, number> = {};
-    const checkedItemIds: string[] = [];
-    for (const { item, vote } of h) {
-      checkedItemIds.push(item.id);
-      if (vote === 'need') needCountMods[item.id] = (needCountMods[item.id] ?? 0) + 1;
-      if (vote === 'skip') skipCountMods[item.id] = (skipCountMods[item.id] ?? 0) + 1;
-    }
-    return { finalShoppingList: list, needCountMods, skipCountMods, checkedItemIds };
-  }
 
   function castVote(v: Vote) {
     if (!current) return;
@@ -82,7 +51,7 @@ const WalkthroughView: React.FC<Props> = ({
   }
 
   function endEarly() {
-    onDone(buildResult(history, currentList));
+    onDone(buildWalkthroughResult(history, currentList));
   }
 
   // ── Empty queue ──────────────────────────────────────────
@@ -150,7 +119,7 @@ const WalkthroughView: React.FC<Props> = ({
             )}
             <button
               className="btn-have"
-              onClick={() => onDone(buildResult(history, currentList))}
+              onClick={() => onDone(buildWalkthroughResult(history, currentList))}
             >
               Save &amp; Done
             </button>

@@ -1,41 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import QRCode from 'qrcode';
-import { InventoryItem, AppData } from '../types';
-
-function encode(data: AppData): string {
-  const json = JSON.stringify(data);
-  const bytes = new TextEncoder().encode(json);
-  let binary = '';
-  bytes.forEach(b => {
-    binary += String.fromCharCode(b);
-  });
-  return btoa(binary);
-}
-
-function decode(str: string): AppData | null {
-  try {
-    const binary = atob(str.trim());
-    const bytes = new Uint8Array(binary.length);
-    for (let i = 0; i < binary.length; i++) {
-      bytes[i] = binary.charCodeAt(i);
-    }
-    return JSON.parse(new TextDecoder().decode(bytes)) as AppData;
-  } catch {
-    return null;
-  }
-}
-
-function sanitizeItems(raw: unknown[]): InventoryItem[] {
-  return raw.filter(
-    (i): i is InventoryItem =>
-      i !== null &&
-      typeof i === 'object' &&
-      typeof (i as InventoryItem).id === 'string' &&
-      typeof (i as InventoryItem).name === 'string' &&
-      typeof (i as InventoryItem).location === 'string'
-  );
-}
-
+import { AppData, InventoryItem } from '../types';
+import { encodeBackup, prepareImport } from '../domain/backup';
 
 interface Props {
   items: InventoryItem[];
@@ -81,7 +47,7 @@ const ImportExportView: React.FC<Props> = ({ items, shoppingList, onImport }) =>
   }, [shareUrl]);
 
   function handleExport() {
-    setExportStr(encode({ version: 1, items, shoppingList }));
+    setExportStr(encodeBackup({ version: 1, items, shoppingList }));
     setCopied(false);
   }
 
@@ -92,28 +58,22 @@ const ImportExportView: React.FC<Props> = ({ items, shoppingList, onImport }) =>
   }
 
   function handleImport(merge: boolean) {
-    let data: AppData | null;
-    try {
-      data = decode(importStr);
-    } catch {
-      data = null;
-    }
-    if (!data || !Array.isArray(data.items)) {
+    const prepared = prepareImport(importStr, items, shoppingList, merge);
+    if (!prepared) {
       setMessage('❌ Invalid data. Check your paste and try again.');
       return;
     }
-    const safeItems = sanitizeItems(data.items);
-    const safeList  = Array.isArray(data.shoppingList) ? data.shoppingList.filter((x): x is string => typeof x === 'string') : [];
-    const skipped   = data.items.length - safeItems.length;
-    const skipNote  = skipped > 0 ? ` (${skipped} malformed item${skipped !== 1 ? 's' : ''} skipped)` : '';
+    const skipped = prepared.skippedItemCount;
+    const skipNote = skipped > 0
+      ? ` (${skipped} malformed item${skipped !== 1 ? 's' : ''} skipped)`
+      : '';
+    onImport(prepared.data);
     if (merge) {
-      const existing = new Set(items.map(i => i.id));
-      const added    = safeItems.filter(i => !existing.has(i.id));
-      onImport({ version: 1, items: [...items, ...added], shoppingList });
-      setMessage(`✅ Merged ${added.length} new item${added.length !== 1 ? 's' : ''}${skipNote}.`);
+      const added = prepared.importedItemCount;
+      setMessage(`✅ Merged ${added} new item${added !== 1 ? 's' : ''}${skipNote}.`);
     } else {
-      onImport({ version: 1, items: safeItems, shoppingList: safeList });
-      setMessage(`✅ Replaced all data (${safeItems.length} items)${skipNote}.`);
+      const imported = prepared.importedItemCount;
+      setMessage(`✅ Replaced all data (${imported} item${imported !== 1 ? 's' : ''})${skipNote}.`);
     }
     setImportStr('');
   }

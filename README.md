@@ -24,8 +24,11 @@ npm start
 Run the same quality gate used by GitHub Actions:
 
 ```sh
+npx playwright install chromium
 npm run check
 ```
+
+The quality gate runs ESLint, unit and characterization tests, a production build, and Playwright browser journeys. Use `npm run test:unit` or `npm run test:e2e` to run either test layer independently.
 
 ## GitHub Pages deployment
 
